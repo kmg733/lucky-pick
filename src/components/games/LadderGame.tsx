@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { LadderParticipant, LadderResult } from '@/types';
+import { shuffleArray } from '@/lib/random';
 
 interface HorizontalLine {
   fromIndex: number;
@@ -43,10 +44,12 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
       id: `participant-${i}`,
       name: `참가자 ${i + 1}`,
     }));
-    const newResults: LadderResult[] = Array.from({ length: participantCount }, (_, i) => ({
-      id: `result-${i}`,
-      name: i === 0 ? '당첨' : '꽝',
-    }));
+    const newResults: LadderResult[] = shuffleArray(
+      Array.from({ length: participantCount }, (_, i) => ({
+        id: `result-${i}`,
+        name: i === 0 ? '당첨' : '꽝',
+      }))
+    );
     setParticipants(newParticipants);
     setResults(newResults);
     setRevealedResults(new Set());
@@ -284,6 +287,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
   const handleRegenerate = () => {
     setRevealedResults(new Set());
     setSelectedIndex(null);
+    setResults(prevResults => shuffleArray(prevResults));
     generateLadder(participantCount);
   };
 
