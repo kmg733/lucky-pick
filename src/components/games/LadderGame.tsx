@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { LadderParticipant, LadderResult } from '@/types';
 import { shuffleArray } from '@/lib/random';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HorizontalLine {
   fromIndex: number;
@@ -23,6 +24,7 @@ interface LadderGameProps {
 
 export default function LadderGame({ className = '' }: LadderGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
   const [participantCount, setParticipantCount] = useState(4);
   const [participants, setParticipants] = useState<LadderParticipant[]>([]);
   const [results, setResults] = useState<LadderResult[]>([]);
@@ -141,13 +143,14 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
 
   // Canvas 그리기
   const drawLadder = useCallback((ctx: CanvasRenderingContext2D, count: number, highlightPath?: LadderPath[], animationProgress?: number) => {
+    const isDark = theme === 'dark';
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     const lineSpacing = (CANVAS_WIDTH - PADDING * 2) / (count - 1);
     const ladderHeight = CANVAS_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN;
 
     // 세로선 그리기
-    ctx.strokeStyle = '#d1d5db';
+    ctx.strokeStyle = isDark ? '#4b5563' : '#d1d5db';
     ctx.lineWidth = 3;
 
     for (let i = 0; i < count; i++) {
@@ -159,7 +162,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
     }
 
     // 가로선 그리기
-    ctx.strokeStyle = '#9ca3af';
+    ctx.strokeStyle = isDark ? '#6b7280' : '#9ca3af';
     ctx.lineWidth = 3;
 
     for (const line of ladder) {
@@ -207,12 +210,12 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
         ctx.beginPath();
         ctx.arc(currentX, currentY, 8, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = isDark ? '#1e293b' : '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
       }
     }
-  }, [ladder]);
+  }, [ladder, theme]);
 
   // Canvas 렌더링
   useEffect(() => {
@@ -301,11 +304,11 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
     <div className={`flex flex-col lg:flex-row gap-6 ${className}`}>
       {/* 설정 패널 */}
       <Card className="p-6 lg:w-80 flex-shrink-0">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">게임 설정</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">게임 설정</h3>
 
         {/* 참가자 수 설정 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             참가자 수: {participantCount}명
           </label>
           <input
@@ -321,7 +324,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
 
         {/* 참가자 이름 입력 */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">참가자 이름</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">참가자 이름</h4>
           <div className="space-y-2">
             {participants.map((participant, index) => (
               <input
@@ -329,7 +332,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
                 type="text"
                 value={participant.name}
                 onChange={(e) => handleParticipantNameChange(index, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                 placeholder={`참가자 ${index + 1}`}
                 disabled={isAnimating}
               />
@@ -339,7 +342,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
 
         {/* 결과 입력 */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">결과 설정</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">결과 설정</h4>
           <div className="space-y-2">
             {results.map((result, index) => (
               <input
@@ -347,7 +350,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
                 type="text"
                 value={result.name}
                 onChange={(e) => handleResultNameChange(index, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                 placeholder={`결과 ${index + 1}`}
                 disabled={isAnimating}
               />
@@ -368,7 +371,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
             onClick={handleReset}
             disabled={isAnimating}
             variant="outline"
-            className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
+            className="w-full border-orange-500 text-orange-600 hover:bg-orange-50 dark:border-orange-400 dark:text-orange-400 dark:hover:bg-orange-950"
           >
             결과 초기화
           </Button>
@@ -390,7 +393,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
                     w-16 h-16 rounded-full font-medium text-sm transition-all duration-200
                     ${selectedIndex === index
                       ? 'bg-orange-500 text-white scale-110 shadow-lg'
-                      : 'bg-orange-100 text-orange-700 hover:bg-orange-200 hover:scale-105'
+                      : 'bg-orange-100 text-orange-700 hover:bg-orange-200 hover:scale-105 dark:bg-orange-900 dark:text-orange-300 dark:hover:bg-orange-800'
                     }
                     ${isAnimating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
@@ -404,7 +407,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
           </div>
 
           {/* Canvas */}
-          <div className="flex justify-center mb-4 bg-gray-50 rounded-lg p-4">
+          <div className="flex justify-center mb-4 bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
             <canvas
               ref={canvasRef}
               width={CANVAS_WIDTH}
@@ -424,7 +427,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
                     transition-all duration-300
                     ${revealedResults.has(index)
                       ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg scale-110'
-                      : 'bg-gray-200 text-gray-400'
+                      : 'bg-gray-200 text-gray-400 dark:bg-slate-600 dark:text-gray-500'
                     }
                   `}
                 >
@@ -435,9 +438,9 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
           </div>
 
           {/* 사용 방법 */}
-          <div className="mt-6 p-4 bg-orange-50 rounded-lg">
-            <h4 className="font-semibold text-orange-900 mb-2">사용 방법</h4>
-            <ol className="text-sm text-orange-800 space-y-1 list-decimal list-inside">
+          <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+            <h4 className="font-semibold text-orange-900 dark:text-orange-200 mb-2">사용 방법</h4>
+            <ol className="text-sm text-orange-800 dark:text-orange-300 space-y-1 list-decimal list-inside">
               <li>참가자 수를 설정하고 이름을 입력하세요</li>
               <li>결과를 원하는 대로 설정하세요</li>
               <li>상단의 참가자 버튼을 클릭하면 경로가 표시됩니다</li>
