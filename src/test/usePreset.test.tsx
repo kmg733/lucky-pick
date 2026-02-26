@@ -181,6 +181,37 @@ describe('usePreset', () => {
       const parsed = JSON.parse(raw!);
       expect(parsed).toHaveLength(0);
     });
+
+    it('returns true when successfully deleting an existing preset (M-2)', () => {
+      const { result } = renderHook(() => usePreset<PrizePresetData>('prize'));
+
+      const data: PrizePresetData = { items: 'item' };
+
+      act(() => {
+        result.current.savePreset('Delete Me', data);
+      });
+
+      const presetId = result.current.presets[0].id;
+      let deleteResult: boolean = false;
+
+      act(() => {
+        deleteResult = result.current.deletePreset(presetId);
+      });
+
+      expect(deleteResult).toBe(true);
+    });
+
+    it('returns false when deleting a non-existent preset (M-2)', () => {
+      const { result } = renderHook(() => usePreset<PrizePresetData>('prize'));
+
+      let deleteResult: boolean = true;
+
+      act(() => {
+        deleteResult = result.current.deletePreset('non-existent-id');
+      });
+
+      expect(deleteResult).toBe(false);
+    });
   });
 
   // ─── Game Type Isolation ────────────────────────────────────

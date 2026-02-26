@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getPresets, savePreset, deletePreset, MAX_PRESETS_PER_GAME, MAX_PRESET_NAME_LENGTH, STORAGE_KEY_PREFIX } from '@/lib/presetStorage';
-import type { NumberPresetData, PrizePresetData, NamePresetData } from '@/types/preset';
+import {
+  getPresets,
+  savePreset,
+  deletePreset,
+  MAX_PRESETS_PER_GAME,
+  MAX_PRESET_NAME_LENGTH,
+  MAX_PRESET_DATA_SIZE,
+  STORAGE_KEY_PREFIX,
+} from '@/lib/presetStorage';
+import type { NumberPresetData, PrizePresetData, NamePresetData, LadderPresetData } from '@/types/preset';
 
 describe('presetStorage', () => {
   beforeEach(() => {
@@ -63,13 +71,14 @@ describe('presetStorage', () => {
       const data: PrizePresetData = { items: 'Gold\nSilver\nBronze' };
 
       const saved = savePreset<PrizePresetData>('prize', 'Prizes', data);
+      expect(saved).not.toBeNull();
 
-      expect(saved.id).toBeTruthy();
-      expect(saved.name).toBe('Prizes');
-      expect(saved.gameType).toBe('prize');
-      expect(saved.data).toEqual(data);
-      expect(saved.createdAt).toBeTypeOf('number');
-      expect(saved.createdAt).toBeGreaterThan(0);
+      expect(saved!.id).toBeTruthy();
+      expect(saved!.name).toBe('Prizes');
+      expect(saved!.gameType).toBe('prize');
+      expect(saved!.data).toEqual(data);
+      expect(saved!.createdAt).toBeTypeOf('number');
+      expect(saved!.createdAt).toBeGreaterThan(0);
     });
 
     it('generates unique IDs for each saved preset', () => {
@@ -77,8 +86,10 @@ describe('presetStorage', () => {
 
       const preset1 = savePreset<PrizePresetData>('prize', 'P1', data);
       const preset2 = savePreset<PrizePresetData>('prize', 'P2', data);
+      expect(preset1).not.toBeNull();
+      expect(preset2).not.toBeNull();
 
-      expect(preset1.id).not.toBe(preset2.id);
+      expect(preset1!.id).not.toBe(preset2!.id);
     });
 
     it('persists preset to localStorage', () => {
@@ -148,8 +159,9 @@ describe('presetStorage', () => {
     it('deletes a preset by ID', () => {
       const data: PrizePresetData = { items: 'item' };
       const saved = savePreset<PrizePresetData>('prize', 'To Delete', data);
+      expect(saved).not.toBeNull();
 
-      deletePreset('prize', saved.id);
+      deletePreset('prize', saved!.id);
 
       const result = getPresets<PrizePresetData>('prize');
       expect(result).toHaveLength(0);
@@ -159,12 +171,14 @@ describe('presetStorage', () => {
       const data: PrizePresetData = { items: 'item' };
       const preset1 = savePreset<PrizePresetData>('prize', 'Keep', data);
       const preset2 = savePreset<PrizePresetData>('prize', 'Delete', data);
+      expect(preset1).not.toBeNull();
+      expect(preset2).not.toBeNull();
 
-      deletePreset('prize', preset2.id);
+      deletePreset('prize', preset2!.id);
 
       const result = getPresets<PrizePresetData>('prize');
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(preset1.id);
+      expect(result[0].id).toBe(preset1!.id);
       expect(result[0].name).toBe('Keep');
     });
 
@@ -223,16 +237,18 @@ describe('presetStorage', () => {
       const longName = 'A'.repeat(100);
       const data: PrizePresetData = { items: 'item' };
       const saved = savePreset<PrizePresetData>('prize', longName, data);
+      expect(saved).not.toBeNull();
 
-      expect(saved.name).toHaveLength(MAX_PRESET_NAME_LENGTH);
-      expect(saved.name).toBe('A'.repeat(MAX_PRESET_NAME_LENGTH));
+      expect(saved!.name).toHaveLength(MAX_PRESET_NAME_LENGTH);
+      expect(saved!.name).toBe('A'.repeat(MAX_PRESET_NAME_LENGTH));
     });
 
     it('does not truncate names within the limit', () => {
       const data: PrizePresetData = { items: 'item' };
       const saved = savePreset<PrizePresetData>('prize', 'Short Name', data);
+      expect(saved).not.toBeNull();
 
-      expect(saved.name).toBe('Short Name');
+      expect(saved!.name).toBe('Short Name');
     });
   });
 
@@ -264,6 +280,248 @@ describe('presetStorage', () => {
 
     it('STORAGE_KEY_PREFIX is correct', () => {
       expect(STORAGE_KEY_PREFIX).toBe('lucky-pick-presets-');
+    });
+
+    it('MAX_PRESET_DATA_SIZE is 50000', () => {
+      expect(MAX_PRESET_DATA_SIZE).toBe(50000);
+    });
+  });
+
+  // ─── H-1: Name sanitization ──────────────────────────────────
+
+  describe('savePreset - name sanitization (H-1)', () => {
+    it('removes < > " \' & characters from preset name', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test<script>"name\'&', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.name).not.toContain('<');
+      expect(saved!.name).not.toContain('>');
+      expect(saved!.name).not.toContain('"');
+      expect(saved!.name).not.toContain("'");
+      expect(saved!.name).not.toContain('&');
+      expect(saved!.name).toBe('Testscriptname');
+    });
+
+    it('preserves normal characters after sanitization', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Normal Name 123', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.name).toBe('Normal Name 123');
+    });
+
+    it('sanitizes before truncation', () => {
+      // Name with special chars making it long; after sanitizing + truncating
+      const nameWithSpecials = '<>'.repeat(20) + 'A'.repeat(MAX_PRESET_NAME_LENGTH);
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', nameWithSpecials, data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.name).toHaveLength(MAX_PRESET_NAME_LENGTH);
+      expect(saved!.name).not.toContain('<');
+      expect(saved!.name).not.toContain('>');
+    });
+  });
+
+  // ─── H-2: Game-specific data validation ──────────────────────
+
+  describe('getPresets - game-specific data validation (H-2)', () => {
+    it('filters out prize presets with non-string items', () => {
+      const items = [
+        { id: 'a', name: 'Valid', gameType: 'prize', data: { items: 'Gold\nSilver' }, createdAt: 1000 },
+        { id: 'b', name: 'Invalid', gameType: 'prize', data: { items: 123 }, createdAt: 1001 },
+        { id: 'c', name: 'Missing', gameType: 'prize', data: {}, createdAt: 1002 },
+      ];
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}prize`, JSON.stringify(items));
+
+      const result = getPresets<PrizePresetData>('prize');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('a');
+    });
+
+    it('filters out name presets with invalid structure', () => {
+      const items = [
+        { id: 'a', name: 'Valid', gameType: 'name', data: { names: 'Alice\nBob', pickCount: 1, removeAfterPick: false }, createdAt: 1000 },
+        { id: 'b', name: 'BadPick', gameType: 'name', data: { names: 'Alice', pickCount: 'one', removeAfterPick: false }, createdAt: 1001 },
+        { id: 'c', name: 'NoNames', gameType: 'name', data: { pickCount: 1, removeAfterPick: true }, createdAt: 1002 },
+      ];
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}name`, JSON.stringify(items));
+
+      const result = getPresets<NamePresetData>('name');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('a');
+    });
+
+    it('filters out number presets with invalid structure', () => {
+      const items = [
+        { id: 'a', name: 'Valid', gameType: 'number', data: { minValue: 1, maxValue: 100, pickCount: 3, allowDuplicates: false, sortResults: true }, createdAt: 1000 },
+        { id: 'b', name: 'BadMin', gameType: 'number', data: { minValue: 'one', maxValue: 100, pickCount: 3, allowDuplicates: false, sortResults: true }, createdAt: 1001 },
+        { id: 'c', name: 'MissingSort', gameType: 'number', data: { minValue: 1, maxValue: 100, pickCount: 3, allowDuplicates: false }, createdAt: 1002 },
+      ];
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}number`, JSON.stringify(items));
+
+      const result = getPresets<NumberPresetData>('number');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('a');
+    });
+
+    it('filters out ladder presets with invalid structure', () => {
+      const items = [
+        { id: 'a', name: 'Valid', gameType: 'ladder', data: { participantCount: 3, participantNames: ['A', 'B', 'C'], resultNames: ['1', '2', '3'] }, createdAt: 1000 },
+        { id: 'b', name: 'BadCount', gameType: 'ladder', data: { participantCount: 'three', participantNames: ['A'], resultNames: ['1'] }, createdAt: 1001 },
+        { id: 'c', name: 'NotArray', gameType: 'ladder', data: { participantCount: 2, participantNames: 'A,B', resultNames: ['1'] }, createdAt: 1002 },
+      ];
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}ladder`, JSON.stringify(items));
+
+      const result = getPresets<LadderPresetData>('ladder');
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('a');
+    });
+  });
+
+  // ─── M-1: crypto.randomUUID ──────────────────────────────────
+
+  describe('savePreset - ID generation (M-1)', () => {
+    it('generates valid string IDs', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.id).toBeTruthy();
+      expect(typeof saved!.id).toBe('string');
+      expect(saved!.id.length).toBeGreaterThan(0);
+    });
+
+    it('uses crypto.randomUUID when available', () => {
+      const mockUUID = '550e8400-e29b-41d4-a716-446655440000';
+      const randomUUIDSpy = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(mockUUID as `${string}-${string}-${string}-${string}-${string}`);
+
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.id).toBe(mockUUID);
+
+      randomUUIDSpy.mockRestore();
+    });
+
+    it('falls back when crypto.randomUUID is not available', () => {
+      const randomUUIDSpy = vi.spyOn(globalThis.crypto, 'randomUUID').mockImplementation(() => {
+        throw new Error('not supported');
+      });
+
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.id).toBeTruthy();
+      expect(typeof saved!.id).toBe('string');
+      // Should not be a UUID format since fallback was used
+      expect(saved!.id).not.toContain('-');
+
+      randomUUIDSpy.mockRestore();
+    });
+  });
+
+  // ─── M-2: deletePreset returns boolean ────────────────────────
+
+  describe('deletePreset - returns boolean (M-2)', () => {
+    it('returns true when preset is successfully deleted', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'ToDelete', data);
+      expect(saved).not.toBeNull();
+
+      const result = deletePreset('prize', saved!.id);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when preset ID does not exist', () => {
+      const data: PrizePresetData = { items: 'item' };
+      savePreset<PrizePresetData>('prize', 'Existing', data);
+
+      const result = deletePreset('prize', 'non-existent-id');
+      expect(result).toBe(false);
+    });
+
+    it('returns false when no presets exist for the game type', () => {
+      const result = deletePreset('ladder', 'some-id');
+      expect(result).toBe(false);
+    });
+
+    it('returns false when localStorage write fails during delete', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test', data);
+      expect(saved).not.toBeNull();
+
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('QuotaExceededError');
+      });
+
+      const result = deletePreset('prize', saved!.id);
+      expect(result).toBe(false);
+    });
+  });
+
+  // ─── L-1: Data size limit ────────────────────────────────────
+
+  describe('savePreset - data size limit (L-1)', () => {
+    it('returns null when data exceeds MAX_PRESET_DATA_SIZE', () => {
+      const hugeItems = 'x'.repeat(MAX_PRESET_DATA_SIZE + 1);
+      const data: PrizePresetData = { items: hugeItems };
+
+      const saved = savePreset<PrizePresetData>('prize', 'Huge', data);
+      expect(saved).toBeNull();
+    });
+
+    it('allows data within MAX_PRESET_DATA_SIZE', () => {
+      const normalItems = 'x'.repeat(100);
+      const data: PrizePresetData = { items: normalItems };
+
+      const saved = savePreset<PrizePresetData>('prize', 'Normal', data);
+      expect(saved).not.toBeNull();
+      expect(saved!.name).toBe('Normal');
+    });
+  });
+
+  // ─── L-2: Name trim + empty check ────────────────────────────
+
+  describe('savePreset - name trim (L-2)', () => {
+    it('trims whitespace from preset name', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', '  My Preset  ', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.name).toBe('My Preset');
+    });
+
+    it('returns null when name is empty after trim', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', '   ', data);
+
+      expect(saved).toBeNull();
+    });
+
+    it('returns null when name is empty after sanitization and trim', () => {
+      const data: PrizePresetData = { items: 'item' };
+      const saved = savePreset<PrizePresetData>('prize', ' <>"\'& ', data);
+
+      expect(saved).toBeNull();
+    });
+  });
+
+  // ─── L-4/L-5: Non-null assertion safety ──────────────────────
+
+  describe('savePreset - non-null assertion safety (L-4/L-5)', () => {
+    it('returns non-null result for valid save operation', () => {
+      const data: PrizePresetData = { items: 'Gold\nSilver' };
+      const saved = savePreset<PrizePresetData>('prize', 'Test', data);
+
+      expect(saved).not.toBeNull();
+      expect(saved!.id).toBeTruthy();
+      expect(saved!.name).toBe('Test');
+      expect(saved!.gameType).toBe('prize');
+      expect(saved!.data).toEqual(data);
     });
   });
 });

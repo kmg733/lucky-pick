@@ -11,7 +11,7 @@ interface UsePresetReturn<T extends PresetData> {
   presets: Preset<T>[];
   savePreset: (name: string, data: T) => void;
   loadPreset: (id: string) => T | null;
-  deletePreset: (id: string) => void;
+  deletePreset: (id: string) => boolean;
 }
 
 export function usePreset<T extends PresetData>(
@@ -42,9 +42,10 @@ export function usePreset<T extends PresetData>(
   );
 
   const deletePreset = useCallback(
-    (id: string) => {
-      storageDeletePreset(gameType, id);
+    (id: string): boolean => {
+      const result = storageDeletePreset(gameType, id);
       setPresets(getPresets<T>(gameType));
+      return result;
     },
     [gameType]
   );
