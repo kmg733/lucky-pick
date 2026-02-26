@@ -141,7 +141,7 @@ export default function PrizePicker() {
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {items.map((item, index) => (
                     <div
-                      key={index}
+                      key={`prize-${item}-${index}`}
                       className="px-3 py-2 bg-gray-50 dark:bg-slate-700 rounded text-sm text-gray-700 dark:text-gray-300"
                     >
                       {index + 1}. {item}
@@ -239,7 +239,7 @@ export default function PrizePicker() {
               <div className="max-h-48 overflow-y-auto space-y-2">
                 {history.map((item, index) => (
                   <div
-                    key={index}
+                    key={`history-${item}-${index}`}
                     className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
                   >
                     <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-yellow-400 text-white font-bold rounded-full text-sm">
