@@ -33,3 +33,9 @@ input, textarea, select, label, button, a,
 [class*="border-"] {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
 }
+
+/* ConfirmDialog backdrop – scoped to data-confirm dialogs only */
+dialog[data-confirm]::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}

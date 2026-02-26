@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { GameType } from '@/types/index';
 import type { PresetData } from '@/types/preset';
 import { usePreset } from '@/hooks/usePreset';
 import { MAX_PRESET_NAME_LENGTH } from '@/lib/presetStorage';
+import { MESSAGES } from '@/lib/messages';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface PresetPanelProps<T extends PresetData> {
   gameType: GameType;
   getCurrentData: () => T;
   onLoad: (data: T) => void;
   disabled?: boolean;
+}
+
+interface DeleteTarget {
+  id: string;
+  name: string;
 }
 
 function formatDate(timestamp: number): string {
@@ -30,6 +37,7 @@ export default function PresetPanel<T extends PresetData>({
   const [isSaving, setIsSaving] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [nameError, setNameError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   const handleSaveClick = () => {
     setIsSaving(true);
@@ -46,7 +54,7 @@ export default function PresetPanel<T extends PresetData>({
   const handleConfirmSave = () => {
     const trimmed = nameInput.trim();
     if (!trimmed) {
-      setNameError('설정 이름을 입력해주세요.');
+      setNameError(MESSAGES.preset.errors.nameRequired);
       return;
     }
     const data = getCurrentData();
@@ -63,10 +71,20 @@ export default function PresetPanel<T extends PresetData>({
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`"${name}" 설정을 삭제하시겠습니까?`)) return;
-    deletePreset(id);
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteTarget({ id, name });
   };
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteTarget) {
+      deletePreset(deleteTarget.id);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, deletePreset]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteTarget(null);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -79,14 +97,14 @@ export default function PresetPanel<T extends PresetData>({
   return (
     <div className="mt-4 pt-4 border-t border-gray-200">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-700">저장된 설정</h3>
+        <h3 className="text-sm font-medium text-gray-700">{MESSAGES.preset.title}</h3>
         {!isSaving && (
           <button
             onClick={handleSaveClick}
             disabled={disabled}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            + 현재 설정 저장
+            {MESSAGES.preset.saveButton}
           </button>
         )}
       </div>
@@ -94,7 +112,7 @@ export default function PresetPanel<T extends PresetData>({
       {/* 이름 입력 폼 */}
       {isSaving && (
         <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs font-medium text-blue-700 mb-2">설정 이름 입력</p>
+          <p className="text-xs font-medium text-blue-700 mb-2">{MESSAGES.preset.nameInputLabel}</p>
           <input
             type="text"
             value={nameInput}
@@ -104,7 +122,7 @@ export default function PresetPanel<T extends PresetData>({
               if (nameError) setNameError('');
             }}
             onKeyDown={handleKeyDown}
-            placeholder="예: 로또 기본 설정"
+            placeholder={MESSAGES.preset.nameInputPlaceholder}
             autoFocus
             className="w-full px-2 py-1.5 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           />
@@ -116,13 +134,13 @@ export default function PresetPanel<T extends PresetData>({
               onClick={handleConfirmSave}
               className="flex-1 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
             >
-              저장
+              {MESSAGES.common.save}
             </button>
             <button
               onClick={handleCancelSave}
               className="flex-1 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded transition-colors"
             >
-              취소
+              {MESSAGES.common.cancel}
             </button>
           </div>
         </div>
@@ -145,20 +163,34 @@ export default function PresetPanel<T extends PresetData>({
                 disabled={disabled}
                 className="flex-shrink-0 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                불러오기
+                {MESSAGES.common.load}
               </button>
               <button
-                onClick={() => handleDelete(preset.id, preset.name)}
+                onClick={() => handleDeleteClick(preset.id, preset.name)}
                 disabled={disabled}
                 className="flex-shrink-0 px-2 py-1 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                삭제
+                {MESSAGES.common.delete}
               </button>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-400 text-center py-3">저장된 설정이 없습니다</p>
+        <p className="text-xs text-gray-400 text-center py-3">{MESSAGES.preset.emptyState}</p>
+      )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deleteTarget && (
+        <ConfirmDialog
+          open
+          title={MESSAGES.confirmDialog.deleteTitle}
+          message={MESSAGES.confirmDialog.deleteMessage(deleteTarget.name)}
+          confirmLabel={MESSAGES.common.delete}
+          cancelLabel={MESSAGES.common.cancel}
+          variant="danger"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       )}
     </div>
   );
