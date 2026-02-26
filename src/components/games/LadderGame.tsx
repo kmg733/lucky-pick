@@ -91,6 +91,15 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
     setLadder(lines);
   }, []);
 
+  // animationFrame cleanup (메모리 누수 방지)
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== undefined) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
   // 경로 계산
   const calculatePath = useCallback((startIndex: number, count: number): LadderPath[] => {
     const path: LadderPath[] = [];

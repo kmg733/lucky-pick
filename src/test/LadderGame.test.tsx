@@ -83,6 +83,36 @@ afterEach(() => {
 });
 
 // =================================================================
+// Issue #2: animationFrameRef 미정리 (메모리 누수)
+// =================================================================
+describe('Issue #2: animationFrameRef cleanup on unmount', () => {
+  it('컴포넌트 언마운트 시 cancelAnimationFrame이 호출된다', async () => {
+    const LadderGame = (await import('@/components/games/LadderGame')).default;
+    const { unmount } = render(<LadderGame />);
+
+    // 참가자 버튼 클릭하여 애니메이션 시작
+    const participantButtons = screen.getAllByRole('button').filter(
+      (btn) => btn.textContent && btn.textContent.includes('참가자'),
+    );
+    expect(participantButtons.length).toBeGreaterThan(0);
+
+    participantButtons[0].click();
+
+    // requestAnimationFrame이 호출되었는지 확인 (애니메이션 진행 중)
+    expect(requestAnimationFrame).toHaveBeenCalled();
+
+    const cancelCallsBefore = (cancelAnimationFrame as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    // 컴포넌트 언마운트
+    unmount();
+
+    // 언마운트 후 cancelAnimationFrame이 호출되어야 함
+    const cancelCallsAfter = (cancelAnimationFrame as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(cancelCallsAfter).toBeGreaterThan(cancelCallsBefore);
+  });
+});
+
+// =================================================================
 // Issue #4: calculatePath에서 미사용 변수 ladderHeight
 // =================================================================
 describe('Issue #4: unused variable ladderHeight in calculatePath', () => {
