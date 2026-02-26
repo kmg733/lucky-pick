@@ -1,9 +1,19 @@
 /**
+ * 암호학적으로 안전한 난수를 생성합니다 (CSPRNG).
+ * @returns 0 이상 1 미만의 부동소수점 숫자
+ */
+function secureRandomFloat(): number {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return array[0] / 4294967296; // 2^32
+}
+
+/**
  * 배열에서 랜덤 요소를 선택합니다.
  */
 export function pickRandom<T>(items: T[]): T | null {
   if (items.length === 0) return null;
-  const randomIndex = Math.floor(Math.random() * items.length);
+  const randomIndex = Math.floor(secureRandomFloat() * items.length);
   return items[randomIndex];
 }
 
@@ -25,10 +35,10 @@ export function pickRandomMultiple<T>(
   }
 
   if (count >= items.length) {
-    return [...items].sort(() => Math.random() - 0.5);
+    return shuffleArray(items);
   }
 
-  const shuffled = [...items].sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray(items);
   return shuffled.slice(0, count);
 }
 
@@ -38,7 +48,7 @@ export function pickRandomMultiple<T>(
  * @param max - 최대값 (포함)
  */
 export function generateRandomNumber(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(secureRandomFloat() * (max - min + 1)) + min;
 }
 
 /**
@@ -47,7 +57,7 @@ export function generateRandomNumber(min: number, max: number): number {
 export function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(secureRandomFloat() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;

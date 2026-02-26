@@ -21,20 +21,15 @@ export default function NamePicker() {
   const [pickCount, setPickCount] = useState<number>(1);
   const [removeAfterPick, setRemoveAfterPick] = useState(false);
   const [history, setHistory] = useState<Winner[][]>([]);
-  const animationFrameRef = useRef<number | undefined>(undefined);
+  const [validationError, setValidationError] = useState<string>('');
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const cancelledRef = useRef(false);
 
+  // 이슈 #2: ref 직접 참조로 cleanup (stale ref 방지)
+  // 이슈 #3: animationFrameRef 제거 (dead code)
   useEffect(() => {
-    const animationFrame = animationFrameRef.current;
-    const timeout = timeoutRef.current;
-
     return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -58,6 +53,7 @@ export default function NamePicker() {
     const baseDelay = 50;
 
     const spin = () => {
+      if (cancelledRef.current) return;
       if (spinCount < maxSpins) {
         const randomName = pickRandom(availableNames);
         if (randomName) {
@@ -86,18 +82,21 @@ export default function NamePicker() {
   };
 
   const startSpin = () => {
+    // 이슈 #4: alert() -> validationError state
     if (names.length === 0) {
-      alert('참가자 이름을 입력해주세요!');
+      setValidationError('참가자 이름을 입력해주세요!');
       return;
     }
 
     if (pickCount > names.length) {
-      alert(`추첨 인원(${pickCount}명)이 참가자 수(${names.length}명)보다 많습니다!`);
+      setValidationError(`추첨 인원(${pickCount}명)이 참가자 수(${names.length}명)보다 많습니다!`);
       return;
     }
 
     if (isSpinning) return;
 
+    setValidationError('');
+    cancelledRef.current = false;
     setIsSpinning(true);
     setWinners([]);
     setCurrentRank(0);
@@ -108,14 +107,20 @@ export default function NamePicker() {
 
     const pickNext = () => {
       if (currentRankIndex < pickCount) {
+        if (cancelledRef.current) return;
         setCurrentRank(currentRankIndex + 1);
 
         spinForSingleWinner(currentNames, currentRankIndex + 1, (winner) => {
           newWinners.push(winner);
           setWinners([...newWinners]);
 
+          // 이슈 #5: filter -> splice (첫 번째 매칭만 제거)
           if (removeAfterPick) {
-            currentNames = currentNames.filter(name => name !== winner.name);
+            const winnerIdx = currentNames.indexOf(winner.name);
+            if (winnerIdx !== -1) {
+              currentNames = [...currentNames];
+              currentNames.splice(winnerIdx, 1);
+            }
           }
 
           currentRankIndex++;
@@ -141,12 +146,12 @@ export default function NamePicker() {
   };
 
   const handleReset = () => {
-    setInputText('');
-    setNames([]);
+    cancelledRef.current = true;
     setWinners([]);
     setDisplayName('');
     setHistory([]);
     setCurrentRank(0);
+    setValidationError('');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -239,7 +244,7 @@ export default function NamePicker() {
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {names.map((name, index) => (
                     <div
-                      key={index}
+                      key={`participant-${name}-${index}`}
                       className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded text-sm text-gray-700 dark:text-gray-300"
                     >
                       <span className="text-green-600">👤</span>
@@ -260,6 +265,13 @@ export default function NamePicker() {
         <div className="space-y-4">
           <Card className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">추첨 결과</h2>
+
+            {/* 이슈 #4: 인라인 검증 메시지 */}
+            {validationError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+                <p className="text-sm text-red-600">{validationError}</p>
+              </div>
+            )}
 
             {/* 슬롯 머신 디스플레이 */}
             <div className="relative mb-6">
@@ -299,7 +311,7 @@ export default function NamePicker() {
                         <div className="grid gap-2">
                           {winners.map((winner, index) => (
                             <div
-                              key={index}
+                              key={`winner-${winner.rank}-${winner.timestamp}`}
                               className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-green-300 dark:border-green-600 animate-pulse"
                               style={{ animationDelay: `${index * 0.1}s` }}
                             >
@@ -347,10 +359,10 @@ export default function NamePicker() {
               >
                 {isSpinning ? '추첨 중...' : '🎲 추첨하기'}
               </Button>
+              {/* 이슈 #6: spinning 중에도 초기화 가능하도록 disabled 제거 */}
               <Button
                 onClick={handleReset}
                 variant="secondary"
-                disabled={isSpinning}
                 size="lg"
               >
                 초기화
@@ -375,7 +387,7 @@ export default function NamePicker() {
               <div className="max-h-96 overflow-y-auto space-y-4">
                 {history.map((winnerGroup, groupIndex) => (
                   <div
-                    key={groupIndex}
+                    key={`history-${winnerGroup[0]?.timestamp ?? groupIndex}`}
                     className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg border border-green-200 dark:border-green-800"
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -392,9 +404,9 @@ export default function NamePicker() {
                       )}
                     </div>
                     <div className="space-y-1 ml-8">
-                      {winnerGroup.map((winner, winnerIndex) => (
+                      {winnerGroup.map((winner) => (
                         <div
-                          key={winnerIndex}
+                          key={`history-winner-${winner.rank}-${winner.timestamp}`}
                           className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                         >
                           <span

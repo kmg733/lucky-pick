@@ -9,6 +9,7 @@ vi.mock('@/hooks/useTheme', () => ({
 
 vi.mock('@/lib/random', () => ({
   shuffleArray: <T,>(arr: T[]): T[] => [...arr],
+  generateRandomNumber: (min: number, max: number): number => min,
 }));
 
 function createMockCanvas2DContext(): Record<string, ReturnType<typeof vi.fn>> {
@@ -83,6 +84,35 @@ afterEach(() => {
 });
 
 // =================================================================
+// Issue H-1: Math.random() 잔존 - CSPRNG 적용 누락
+// =================================================================
+describe('Issue H-1: LadderGame에서 Math.random() 직접 사용 금지', () => {
+  it('LadderGame 소스코드에 Math.random()이 직접 사용되지 않아야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      'utf-8',
+    );
+
+    // Math.random() 직접 호출이 없어야 한다
+    const mathRandomUsages = source.match(/Math\.random\s*\(\s*\)/g);
+    expect(mathRandomUsages).toBeNull();
+  });
+
+  it('generateRandomNumber를 import하여 사용해야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      'utf-8',
+    );
+
+    // generateRandomNumber가 import 되어 있어야 한다
+    const hasImport = /import\s*\{[^}]*generateRandomNumber[^}]*\}\s*from\s*['"]@\/lib\/random['"]/.test(source);
+    expect(hasImport).toBe(true);
+  });
+});
+
+// =================================================================
 // Issue #2: animationFrameRef 미정리 (메모리 누수)
 // =================================================================
 describe('Issue #2: animationFrameRef cleanup on unmount', () => {
@@ -119,7 +149,7 @@ describe('Issue #3: useEffect dependency - generateLadder', () => {
   it('generateLadder가 useEffect 의존성 배열에 포함되어 있어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 
@@ -137,7 +167,7 @@ describe('Issue #4: unused variable ladderHeight in calculatePath', () => {
   it('calculatePath 함수 내에 미사용 변수 ladderHeight가 없어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 

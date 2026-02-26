@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { generateRandomNumber } from '@/lib/random';
+import { generateRandomNumber, pickRandom } from '@/lib/random';
 
 interface PickedNumber {
   value: number;
@@ -26,11 +26,8 @@ export default function NumberPicker() {
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    const timeout = timeoutRef.current;
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -69,9 +66,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           randomNum = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            randomNum = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(randomNum));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          randomNum = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         setRollingNumbers(prev => {
@@ -89,9 +87,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           finalNumber = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            finalNumber = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(finalNumber));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          finalNumber = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         const pickedNumber: PickedNumber = {
@@ -331,7 +330,7 @@ export default function NumberPicker() {
                     <div className="grid grid-cols-5 gap-3">
                       {getDisplayNumbers().map((num, index) => (
                         <div
-                          key={index}
+                          key={`slot-${index}`}
                           className={`
                             relative aspect-square flex items-center justify-center rounded-xl border-4 font-mono font-bold text-2xl transition-all duration-300
                             ${isSlotActive(index)
@@ -362,7 +361,7 @@ export default function NumberPicker() {
                         <div className="flex flex-wrap gap-2 justify-center">
                           {getDisplayNumbers().map((num, index) => (
                             <div
-                              key={index}
+                              key={`result-${num}-${index}`}
                               className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-mono font-bold text-lg rounded-full shadow-lg animate-bounce"
                               style={{
                                 animationDelay: `${index * 0.1}s`,
@@ -430,7 +429,7 @@ export default function NumberPicker() {
               <div className="max-h-64 overflow-y-auto space-y-3">
                 {history.map((numbers, index) => (
                   <div
-                    key={index}
+                    key={`history-${numbers.join('-')}-${index}`}
                     className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 rounded-lg border border-purple-200 dark:border-purple-800"
                   >
                     <div className="flex items-center gap-2 mb-3">
@@ -449,7 +448,7 @@ export default function NumberPicker() {
                     <div className="flex flex-wrap gap-2">
                       {numbers.map((num, numIndex) => (
                         <div
-                          key={numIndex}
+                          key={`num-${num}-${numIndex}`}
                           className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-purple-400 to-indigo-500 text-white font-mono font-bold rounded-lg shadow text-sm"
                         >
                           {num}

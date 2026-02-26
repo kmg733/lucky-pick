@@ -13,20 +13,15 @@ export default function PrizePicker() {
   const [displayItem, setDisplayItem] = useState<string>('');
   const [removeAfterPick, setRemoveAfterPick] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const animationFrameRef = useRef<number | undefined>(undefined);
+  const [validationError, setValidationError] = useState<string>('');
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const cancelledRef = useRef(false);
 
+  // 이슈 #2: ref 직접 참조로 cleanup (stale ref 방지)
+  // 이슈 #3: animationFrameRef 제거 (dead code)
   useEffect(() => {
-    const animationFrame = animationFrameRef.current;
-    const timeout = timeoutRef.current;
-
     return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -41,13 +36,16 @@ export default function PrizePicker() {
   };
 
   const startSpin = () => {
+    // 이슈 #4: alert() -> validationError state
     if (items.length === 0) {
-      alert('경품을 입력해주세요!');
+      setValidationError('경품을 입력해주세요!');
       return;
     }
 
     if (isSpinning) return;
 
+    setValidationError('');
+    cancelledRef.current = false;
     setIsSpinning(true);
     setSelectedItem(null);
 
@@ -56,6 +54,7 @@ export default function PrizePicker() {
     const baseDelay = 50;
 
     const spin = () => {
+      if (cancelledRef.current) return;
       if (spinCount < maxSpins) {
         const randomItem = pickRandom(items);
         if (randomItem) {
@@ -73,10 +72,15 @@ export default function PrizePicker() {
           setDisplayItem(winner);
           setHistory(prev => [winner, ...prev]);
 
+          // 이슈 #5: filter -> splice (첫 번째 매칭만 제거)
           if (removeAfterPick) {
-            const newItems = items.filter(item => item !== winner);
-            setItems(newItems);
-            setInputText(newItems.join('\n'));
+            const winnerIndex = items.indexOf(winner);
+            if (winnerIndex !== -1) {
+              const newItems = [...items];
+              newItems.splice(winnerIndex, 1);
+              setItems(newItems);
+              setInputText(newItems.join('\n'));
+            }
           }
         }
         setIsSpinning(false);
@@ -87,11 +91,11 @@ export default function PrizePicker() {
   };
 
   const handleReset = () => {
-    setInputText('');
-    setItems([]);
+    cancelledRef.current = true;
     setSelectedItem(null);
     setDisplayItem('');
     setHistory([]);
+    setValidationError('');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -141,7 +145,7 @@ export default function PrizePicker() {
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {items.map((item, index) => (
                     <div
-                      key={index}
+                      key={`prize-${item}-${index}`}
                       className="px-3 py-2 bg-gray-50 dark:bg-slate-700 rounded text-sm text-gray-700 dark:text-gray-300"
                     >
                       {index + 1}. {item}
@@ -161,6 +165,13 @@ export default function PrizePicker() {
         <div className="space-y-4">
           <Card className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">추첨 결과</h2>
+
+            {/* 이슈 #4: 인라인 검증 메시지 */}
+            {validationError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+                <p className="text-sm text-red-600">{validationError}</p>
+              </div>
+            )}
 
             {/* 슬롯 머신 디스플레이 */}
             <div className="relative mb-6">
@@ -211,10 +222,10 @@ export default function PrizePicker() {
               >
                 {isSpinning ? '추첨 중...' : '🎲 추첨하기'}
               </Button>
+              {/* 이슈 #6: spinning 중에도 초기화 가능하도록 disabled 제거 */}
               <Button
                 onClick={handleReset}
                 variant="secondary"
-                disabled={isSpinning}
                 size="lg"
               >
                 초기화
@@ -239,7 +250,7 @@ export default function PrizePicker() {
               <div className="max-h-48 overflow-y-auto space-y-2">
                 {history.map((item, index) => (
                   <div
-                    key={index}
+                    key={`history-${item}-${index}`}
                     className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
                   >
                     <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-yellow-400 text-white font-bold rounded-full text-sm">
