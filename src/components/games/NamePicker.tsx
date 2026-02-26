@@ -141,14 +141,15 @@ export default function NamePicker() {
   };
 
   const handleReset = () => {
-    setInputText('');
-    setNames([]);
     setWinners([]);
     setDisplayName('');
     setHistory([]);
     setCurrentRank(0);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
     setIsSpinning(false);
   };
