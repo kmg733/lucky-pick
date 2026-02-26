@@ -113,6 +113,24 @@ describe('Issue #2: animationFrameRef cleanup on unmount', () => {
 });
 
 // =================================================================
+// Issue #3: useEffect 의존성 배열에 generateLadder 누락
+// =================================================================
+describe('Issue #3: useEffect dependency - generateLadder', () => {
+  it('generateLadder가 useEffect 의존성 배열에 포함되어 있어야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
+      'utf-8',
+    );
+
+    // generateLadder(participantCount)를 호출하는 useEffect의 의존성 배열에
+    // generateLadder가 포함되어야 React exhaustive-deps 규칙 준수
+    const hasGenerateLadderInDeps = /\}\s*,\s*\[participantCount\s*,\s*generateLadder\s*\]/.test(source);
+    expect(hasGenerateLadderInDeps).toBe(true);
+  });
+});
+
+// =================================================================
 // Issue #4: calculatePath에서 미사용 변수 ladderHeight
 // =================================================================
 describe('Issue #4: unused variable ladderHeight in calculatePath', () => {
