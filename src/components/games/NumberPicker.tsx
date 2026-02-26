@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { generateRandomNumber } from '@/lib/random';
+import PresetPanel from '@/components/ui/PresetPanel';
+import { generateRandomNumber, pickRandom } from '@/lib/random';
+import type { NumberPresetData } from '@/types/preset';
 
 interface PickedNumber {
   value: number;
@@ -26,11 +28,8 @@ export default function NumberPicker() {
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    const timeout = timeoutRef.current;
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -69,9 +68,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           randomNum = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            randomNum = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(randomNum));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          randomNum = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         setRollingNumbers(prev => {
@@ -89,9 +89,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           finalNumber = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            finalNumber = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(finalNumber));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          finalNumber = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         const pickedNumber: PickedNumber = {
@@ -205,13 +206,13 @@ export default function NumberPicker() {
         {/* 왼쪽: 설정 영역 */}
         <div className="space-y-4">
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">번호 설정</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">번호 설정</h2>
 
             <div className="space-y-4">
               {/* 범위 설정 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="minValue" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="minValue" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     최소값
                   </label>
                   <input
@@ -219,12 +220,12 @@ export default function NumberPicker() {
                     id="minValue"
                     value={minValue}
                     onChange={(e) => setMinValue(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                     disabled={isSpinning}
                   />
                 </div>
                 <div>
-                  <label htmlFor="maxValue" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="maxValue" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     최대값
                   </label>
                   <input
@@ -232,7 +233,7 @@ export default function NumberPicker() {
                     id="maxValue"
                     value={maxValue}
                     onChange={(e) => setMaxValue(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                     disabled={isSpinning}
                   />
                 </div>
@@ -240,7 +241,7 @@ export default function NumberPicker() {
 
               {/* 뽑을 개수 */}
               <div>
-                <label htmlFor="pickCount" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="pickCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   뽑을 개수: {pickCount}개
                 </label>
                 <input
@@ -250,10 +251,10 @@ export default function NumberPicker() {
                   max="10"
                   value={pickCount}
                   onChange={(e) => setPickCount(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  className="w-full h-2 bg-gray-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-purple-500"
                   disabled={isSpinning}
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>1개</span>
                   <span>5개</span>
                   <span>10개</span>
@@ -271,7 +272,7 @@ export default function NumberPicker() {
                     className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     disabled={isSpinning}
                   />
-                  <label htmlFor="allowDuplicates" className="text-sm text-gray-700">
+                  <label htmlFor="allowDuplicates" className="text-sm text-gray-700 dark:text-gray-300">
                     중복 허용
                   </label>
                 </div>
@@ -284,7 +285,7 @@ export default function NumberPicker() {
                     className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     disabled={isSpinning}
                   />
-                  <label htmlFor="sortResults" className="text-sm text-gray-700">
+                  <label htmlFor="sortResults" className="text-sm text-gray-700 dark:text-gray-300">
                     오름차순 정렬
                   </label>
                 </div>
@@ -292,37 +293,50 @@ export default function NumberPicker() {
 
               {/* 검증 오류 */}
               {validationError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">⚠️ {validationError}</p>
+                <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">⚠️ {validationError}</p>
                 </div>
               )}
             </div>
 
             {/* 설정 요약 */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">설정 요약</h3>
-              <div className="space-y-1 text-sm text-gray-600">
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">설정 요약</h3>
+              <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                 <p>• 범위: {minValue} ~ {maxValue} ({maxValue - minValue + 1}개)</p>
                 <p>• 추첨 개수: {pickCount}개</p>
                 <p>• 중복: {allowDuplicates ? '허용' : '불허'}</p>
                 <p>• 정렬: {sortResults ? '오름차순' : '추첨 순서'}</p>
               </div>
             </div>
+
+            <PresetPanel<NumberPresetData>
+              gameType="number"
+              getCurrentData={() => ({ minValue, maxValue, pickCount, allowDuplicates, sortResults })}
+              onLoad={(data) => {
+                setMinValue(data.minValue);
+                setMaxValue(data.maxValue);
+                setPickCount(data.pickCount);
+                setAllowDuplicates(data.allowDuplicates);
+                setSortResults(data.sortResults);
+              }}
+              disabled={isSpinning}
+            />
           </Card>
         </div>
 
         {/* 오른쪽: 추첨 결과 */}
         <div className="space-y-4">
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">추첨 결과</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">추첨 결과</h2>
 
             {/* 디지털 디스플레이 */}
             <div className="relative mb-6">
-              <div className="bg-gradient-to-br from-purple-100 to-indigo-200 rounded-2xl p-8 border-4 border-purple-400 shadow-lg min-h-[280px] flex items-center justify-center">
+              <div className="bg-gradient-to-br from-purple-100 to-indigo-200 dark:from-purple-900 dark:to-indigo-800 rounded-2xl p-8 border-4 border-purple-400 dark:border-purple-600 shadow-lg min-h-[280px] flex items-center justify-center">
                 {isSpinning || pickedNumbers.length > 0 ? (
                   <div className="w-full">
                     {isSpinning && (
-                      <div className="text-center mb-4 text-sm font-medium text-purple-700">
+                      <div className="text-center mb-4 text-sm font-medium text-purple-700 dark:text-purple-300">
                         {currentSlot + 1}번째 번호 추첨 중...
                       </div>
                     )}
@@ -331,14 +345,14 @@ export default function NumberPicker() {
                     <div className="grid grid-cols-5 gap-3">
                       {getDisplayNumbers().map((num, index) => (
                         <div
-                          key={index}
+                          key={`slot-${index}`}
                           className={`
                             relative aspect-square flex items-center justify-center rounded-xl border-4 font-mono font-bold text-2xl transition-all duration-300
                             ${isSlotActive(index)
                               ? 'border-yellow-400 bg-gradient-to-br from-yellow-100 to-yellow-200 animate-pulse shadow-lg scale-110'
                               : isSlotCompleted(index) && !isSpinning
                               ? 'border-purple-500 bg-gradient-to-br from-purple-200 to-indigo-300 text-purple-800 shadow-md'
-                              : 'border-gray-300 bg-white text-gray-400'
+                              : 'border-gray-300 bg-white text-gray-400 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-500'
                             }
                           `}
                           style={{
@@ -356,13 +370,13 @@ export default function NumberPicker() {
                     {/* 완료 메시지 */}
                     {!isSpinning && pickedNumbers.length > 0 && (
                       <div className="mt-6 text-center">
-                        <div className="text-xl font-medium text-purple-700 mb-3">
+                        <div className="text-xl font-medium text-purple-700 dark:text-purple-300 mb-3">
                           🎉 추첨 완료! 🎉
                         </div>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {getDisplayNumbers().map((num, index) => (
                             <div
-                              key={index}
+                              key={`result-${num}-${index}`}
                               className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-mono font-bold text-lg rounded-full shadow-lg animate-bounce"
                               style={{
                                 animationDelay: `${index * 0.1}s`,
@@ -377,7 +391,7 @@ export default function NumberPicker() {
                     )}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400">
+                  <div className="text-center text-gray-400 dark:text-gray-500">
                     <div className="text-6xl mb-4">🔢</div>
                     <p className="text-lg">추첨을 시작하세요</p>
                     <p className="text-sm mt-2">디지털 숫자가 롤링됩니다</p>
@@ -387,7 +401,7 @@ export default function NumberPicker() {
 
               {isSpinning && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="absolute inset-0 bg-white/10 rounded-2xl animate-pulse" />
+                  <div className="absolute inset-0 bg-white/10 dark:bg-black/10 rounded-2xl animate-pulse" />
                 </div>
               )}
             </div>
@@ -417,12 +431,12 @@ export default function NumberPicker() {
           {history.length > 0 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   추첨 이력 ({history.length}회)
                 </h3>
                 <button
                   onClick={handleClearHistory}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 transition-colors"
                 >
                   이력 삭제
                 </button>
@@ -430,14 +444,14 @@ export default function NumberPicker() {
               <div className="max-h-64 overflow-y-auto space-y-3">
                 {history.map((numbers, index) => (
                   <div
-                    key={index}
-                    className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200"
+                    key={`history-${numbers.join('-')}-${index}`}
+                    className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 rounded-lg border border-purple-200 dark:border-purple-800"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-purple-500 text-white font-bold rounded-full text-xs">
                         {history.length - index}
                       </span>
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {numbers.length}개 추첨
                       </span>
                       {index === 0 && (
@@ -449,7 +463,7 @@ export default function NumberPicker() {
                     <div className="flex flex-wrap gap-2">
                       {numbers.map((num, numIndex) => (
                         <div
-                          key={numIndex}
+                          key={`num-${num}-${numIndex}`}
                           className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-purple-400 to-indigo-500 text-white font-mono font-bold rounded-lg shadow text-sm"
                         >
                           {num}

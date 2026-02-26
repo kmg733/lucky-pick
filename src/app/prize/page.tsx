@@ -4,20 +4,20 @@ export default function PrizePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4 text-center">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 text-center">
           🎁 경품 추첨
         </h1>
-        <p className="text-lg text-gray-600 mb-6 text-center">
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 text-center">
           여러 경품을 등록하고 공정하게 추첨합니다
         </p>
 
         {/* 사용 방법 안내 */}
-        <div className="max-w-3xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
+        <div className="max-w-3xl mx-auto bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
             <span>📋</span>
             <span>사용 방법</span>
           </h2>
-          <ol className="space-y-2 text-sm text-blue-800">
+          <ol className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
             <li className="flex gap-2">
               <span className="font-semibold">1.</span>
               <span>왼쪽 입력 영역에 경품을 한 줄씩 입력하세요</span>

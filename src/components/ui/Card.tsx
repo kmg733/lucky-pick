@@ -13,7 +13,7 @@ export default function Card({
   hover = false,
   onClick
 }: CardProps) {
-  const baseStyles = 'bg-white rounded-xl shadow-md transition-all duration-300';
+  const baseStyles = 'bg-white dark:bg-slate-800 rounded-xl shadow-md dark:shadow-slate-700/30 transition-all duration-300';
   const hoverStyles = hover ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer' : '';
 
   return (
