@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { LadderParticipant, LadderResult } from '@/types';
-import { shuffleArray } from '@/lib/random';
+import { shuffleArray, generateRandomNumber } from '@/lib/random';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HorizontalLine {
@@ -52,10 +52,10 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
       const availablePositions = Array.from({ length: count - 1 }, (_, i) => i);
 
       // 각 세그먼트에 1-3개의 가로선 추가
-      const lineCount = Math.floor(Math.random() * 2) + 1;
+      const lineCount = generateRandomNumber(1, 2);
 
       for (let i = 0; i < lineCount && availablePositions.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * availablePositions.length);
+        const randomIndex = generateRandomNumber(0, availablePositions.length - 1);
         const fromIndex = availablePositions[randomIndex];
         availablePositions.splice(randomIndex, 1);
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { generateRandomNumber } from '@/lib/random';
+import { generateRandomNumber, pickRandom } from '@/lib/random';
 
 interface PickedNumber {
   value: number;
@@ -26,11 +26,8 @@ export default function NumberPicker() {
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    const timeout = timeoutRef.current;
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -69,9 +66,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           randomNum = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            randomNum = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(randomNum));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          randomNum = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         setRollingNumbers(prev => {
@@ -89,9 +87,10 @@ export default function NumberPicker() {
         if (allowDuplicates) {
           finalNumber = generateRandomNumber(minValue, maxValue);
         } else {
-          do {
-            finalNumber = generateRandomNumber(minValue, maxValue);
-          } while (usedNumbers.includes(finalNumber));
+          const available = Array.from(
+            { length: maxValue - minValue + 1 }, (_, i) => minValue + i
+          ).filter(n => !usedNumbers.includes(n));
+          finalNumber = available.length > 0 ? pickRandom(available)! : minValue;
         }
 
         const pickedNumber: PickedNumber = {

@@ -15,6 +15,7 @@ export default function PrizePicker() {
   const [history, setHistory] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string>('');
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const cancelledRef = useRef(false);
 
   // 이슈 #2: ref 직접 참조로 cleanup (stale ref 방지)
   // 이슈 #3: animationFrameRef 제거 (dead code)
@@ -44,6 +45,7 @@ export default function PrizePicker() {
     if (isSpinning) return;
 
     setValidationError('');
+    cancelledRef.current = false;
     setIsSpinning(true);
     setSelectedItem(null);
 
@@ -52,6 +54,7 @@ export default function PrizePicker() {
     const baseDelay = 50;
 
     const spin = () => {
+      if (cancelledRef.current) return;
       if (spinCount < maxSpins) {
         const randomItem = pickRandom(items);
         if (randomItem) {
@@ -88,6 +91,7 @@ export default function PrizePicker() {
   };
 
   const handleReset = () => {
+    cancelledRef.current = true;
     setSelectedItem(null);
     setDisplayItem('');
     setHistory([]);

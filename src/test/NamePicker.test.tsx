@@ -203,6 +203,76 @@ describe('NamePicker - 추첨 실행 후 초기화', () => {
   });
 });
 
+describe('NamePicker - cancelledRef 타이머 경쟁 조건 방어 (이슈 H-2)', () => {
+  it('cancelledRef가 선언되어 있어야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NamePicker.tsx',
+      'utf-8',
+    );
+    const hasCancelledRef = /const\s+cancelledRef\s*=\s*useRef/.test(source);
+    expect(hasCancelledRef).toBe(true);
+  });
+
+  it('spin 함수 내에서 cancelledRef.current 체크가 있어야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NamePicker.tsx',
+      'utf-8',
+    );
+    // spin 함수 내부에 cancelledRef.current를 체크하는 guard가 있어야 한다
+    const hasGuardInSpin = /const\s+spin\s*=\s*\(\s*\)\s*=>\s*\{[\s\S]*?cancelledRef\.current/.test(source);
+    expect(hasGuardInSpin).toBe(true);
+  });
+
+  it('handleReset에서 cancelledRef.current를 true로 설정해야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NamePicker.tsx',
+      'utf-8',
+    );
+    const hasResetCancel = /handleReset[\s\S]*?cancelledRef\.current\s*=\s*true/.test(source);
+    expect(hasResetCancel).toBe(true);
+  });
+
+  it('startSpin에서 cancelledRef.current를 false로 초기화해야 한다', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync(
+      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NamePicker.tsx',
+      'utf-8',
+    );
+    const hasStartInit = /startSpin[\s\S]*?cancelledRef\.current\s*=\s*false/.test(source);
+    expect(hasStartInit).toBe(true);
+  });
+
+  it('추첨 중 초기화하면 cancelledRef로 인해 spin 콜백 체인이 중단된다', () => {
+    vi.useFakeTimers();
+    render(<NamePicker />);
+
+    const textarea = screen.getByPlaceholderText(/참가자 이름을 한 줄씩 입력하세요/);
+    fireEvent.change(textarea, { target: { value: '김철수\n이영희\n박민수' } });
+
+    const spinButton = screen.getByRole('button', { name: /추첨하기/ });
+    fireEvent.click(spinButton);
+
+    // 100ms만 진행 (spin 아직 진행 중)
+    act(() => { vi.advanceTimersByTime(100); });
+
+    // 초기화 (cancelledRef.current = true)
+    const resetButton = screen.getByRole('button', { name: '초기화' });
+    fireEvent.click(resetButton);
+
+    // 추가 타이머 실행해도 상태 변경 없음 (spin이 cancelledRef로 중단됨)
+    act(() => { vi.advanceTimersByTime(20000); });
+
+    // spinning이 false이고 초기 상태로 유지
+    expect(screen.getByText('추첨을 시작하세요')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /추첨하기/ })).not.toBeDisabled();
+
+    vi.useRealTimers();
+  });
+});
+
 describe('NamePicker - 중복 항목 제거 (이슈 #5)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -212,7 +282,13 @@ describe('NamePicker - 중복 항목 제거 (이슈 #5)', () => {
     vi.useRealTimers();
   });
 
-  it('removeAfterPick 활성 시 동일 이름이 여러 개 있으면 당첨된 첫 번째만 제거한다', () => {
+  it('removeAfterPick 활성 시 동일 이름이 여러 개 있으면 당첨된 첫 번째만 제거한다', async () => {
+    // pickRandom을 모듈 mock으로 덮어씌워 항상 첫 번째 요소 반환
+    const randomModule = await import('@/lib/random');
+    const pickRandomSpy = vi.spyOn(randomModule, 'pickRandom').mockImplementation(
+      (items: any[]) => items[0]
+    );
+
     render(<NamePicker />);
 
     // 중복 참가자 입력 (김철수가 2명)
@@ -222,9 +298,6 @@ describe('NamePicker - 중복 항목 제거 (이슈 #5)', () => {
     const checkbox = screen.getByLabelText(/당첨된 이름은 목록에서 제거/);
     fireEvent.click(checkbox);
 
-    // Math.random이 항상 0을 반환하여 첫 번째 요소(김철수) 선택
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-
     const spinButton = screen.getByRole('button', { name: /추첨하기/ });
     fireEvent.click(spinButton);
     act(() => { vi.advanceTimersByTime(15000); });
@@ -232,6 +305,6 @@ describe('NamePicker - 중복 항목 제거 (이슈 #5)', () => {
     // 김철수 하나만 제거되어 2명이 남아야 한다
     expect(screen.getByText(/등록된 참가자 \(2명\)/)).toBeInTheDocument();
 
-    randomSpy.mockRestore();
+    pickRandomSpy.mockRestore();
   });
 });

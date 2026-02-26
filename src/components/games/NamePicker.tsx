@@ -23,6 +23,7 @@ export default function NamePicker() {
   const [history, setHistory] = useState<Winner[][]>([]);
   const [validationError, setValidationError] = useState<string>('');
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const cancelledRef = useRef(false);
 
   // 이슈 #2: ref 직접 참조로 cleanup (stale ref 방지)
   // 이슈 #3: animationFrameRef 제거 (dead code)
@@ -52,6 +53,7 @@ export default function NamePicker() {
     const baseDelay = 50;
 
     const spin = () => {
+      if (cancelledRef.current) return;
       if (spinCount < maxSpins) {
         const randomName = pickRandom(availableNames);
         if (randomName) {
@@ -94,6 +96,7 @@ export default function NamePicker() {
     if (isSpinning) return;
 
     setValidationError('');
+    cancelledRef.current = false;
     setIsSpinning(true);
     setWinners([]);
     setCurrentRank(0);
@@ -104,6 +107,7 @@ export default function NamePicker() {
 
     const pickNext = () => {
       if (currentRankIndex < pickCount) {
+        if (cancelledRef.current) return;
         setCurrentRank(currentRankIndex + 1);
 
         spinForSingleWinner(currentNames, currentRankIndex + 1, (winner) => {
@@ -142,6 +146,7 @@ export default function NamePicker() {
   };
 
   const handleReset = () => {
+    cancelledRef.current = true;
     setWinners([]);
     setDisplayName('');
     setHistory([]);
