@@ -25,10 +25,10 @@ export function pickRandomMultiple<T>(
   }
 
   if (count >= items.length) {
-    return [...items].sort(() => Math.random() - 0.5);
+    return shuffleArray(items);
   }
 
-  const shuffled = [...items].sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray(items);
   return shuffled.slice(0, count);
 }
 

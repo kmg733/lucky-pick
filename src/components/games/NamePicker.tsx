@@ -240,7 +240,7 @@ export default function NamePicker() {
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {names.map((name, index) => (
                     <div
-                      key={index}
+                      key={`participant-${name}-${index}`}
                       className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded text-sm text-gray-700 dark:text-gray-300"
                     >
                       <span className="text-green-600">👤</span>
@@ -300,7 +300,7 @@ export default function NamePicker() {
                         <div className="grid gap-2">
                           {winners.map((winner, index) => (
                             <div
-                              key={index}
+                              key={`winner-${winner.rank}-${winner.timestamp}`}
                               className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-green-300 dark:border-green-600 animate-pulse"
                               style={{ animationDelay: `${index * 0.1}s` }}
                             >
@@ -376,7 +376,7 @@ export default function NamePicker() {
               <div className="max-h-96 overflow-y-auto space-y-4">
                 {history.map((winnerGroup, groupIndex) => (
                   <div
-                    key={groupIndex}
+                    key={`history-${winnerGroup[0]?.timestamp ?? groupIndex}`}
                     className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg border border-green-200 dark:border-green-800"
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -393,9 +393,9 @@ export default function NamePicker() {
                       )}
                     </div>
                     <div className="space-y-1 ml-8">
-                      {winnerGroup.map((winner, winnerIndex) => (
+                      {winnerGroup.map((winner) => (
                         <div
-                          key={winnerIndex}
+                          key={`history-winner-${winner.rank}-${winner.timestamp}`}
                           className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                         >
                           <span
