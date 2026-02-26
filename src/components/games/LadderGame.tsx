@@ -95,7 +95,6 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
   const calculatePath = useCallback((startIndex: number, count: number): LadderPath[] => {
     const path: LadderPath[] = [];
     const lineSpacing = (CANVAS_WIDTH - PADDING * 2) / (count - 1);
-    const ladderHeight = CANVAS_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN;
 
     let currentX = PADDING + startIndex * lineSpacing;
     let currentY = TOP_MARGIN;
