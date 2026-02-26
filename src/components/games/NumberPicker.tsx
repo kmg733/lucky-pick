@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import PresetPanel from '@/components/ui/PresetPanel';
 import { generateRandomNumber, pickRandom } from '@/lib/random';
+import type { NumberPresetData } from '@/types/preset';
 
 interface PickedNumber {
   value: number;
@@ -307,6 +309,19 @@ export default function NumberPicker() {
                 <p>• 정렬: {sortResults ? '오름차순' : '추첨 순서'}</p>
               </div>
             </div>
+
+            <PresetPanel<NumberPresetData>
+              gameType="number"
+              getCurrentData={() => ({ minValue, maxValue, pickCount, allowDuplicates, sortResults })}
+              onLoad={(data) => {
+                setMinValue(data.minValue);
+                setMaxValue(data.maxValue);
+                setPickCount(data.pickCount);
+                setAllowDuplicates(data.allowDuplicates);
+                setSortResults(data.sortResults);
+              }}
+              disabled={isSpinning}
+            />
           </Card>
         </div>
 

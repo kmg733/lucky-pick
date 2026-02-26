@@ -7,7 +7,7 @@ describe('Issue M-2: NumberPicker do-while 무한 루프 방어', () => {
   it('do-while 루프가 제거되고 가용 번호 배열 방식으로 전환되어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NumberPicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/NumberPicker.tsx',
       'utf-8',
     );
     // do-while 루프가 없어야 한다
@@ -18,7 +18,7 @@ describe('Issue M-2: NumberPicker do-while 무한 루프 방어', () => {
   it('pickRandom을 import하여 사용해야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NumberPicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/NumberPicker.tsx',
       'utf-8',
     );
     const hasPickRandomImport = /import\s*\{[^}]*pickRandom[^}]*\}\s*from\s*['"]@\/lib\/random['"]/.test(source);
@@ -28,7 +28,7 @@ describe('Issue M-2: NumberPicker do-while 무한 루프 방어', () => {
   it('가용 번호 배열을 필터링하여 선택하는 패턴이 있어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NumberPicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/NumberPicker.tsx',
       'utf-8',
     );
     // .filter(n => !usedNumbers.includes(n)) 패턴이 있어야 한다
@@ -44,7 +44,7 @@ describe('Issue M-4: NumberPicker useEffect cleanup - stale ref 방지', () => {
   it('useEffect cleanup에서 timeoutRef.current를 직접 참조해야 한다 (stale ref 금지)', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NumberPicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/NumberPicker.tsx',
       'utf-8',
     );
 
@@ -57,7 +57,7 @@ describe('Issue M-4: NumberPicker useEffect cleanup - stale ref 방지', () => {
   it('useEffect cleanup 내부에서 timeoutRef.current를 직접 접근해야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/NumberPicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/NumberPicker.tsx',
       'utf-8',
     );
 

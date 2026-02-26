@@ -217,7 +217,7 @@ describe('PrizePicker - cancelledRef 타이머 경쟁 조건 방어 (이슈 H-2)
   it('cancelledRef가 선언되어 있어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/PrizePicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/PrizePicker.tsx',
       'utf-8',
     );
     const hasCancelledRef = /const\s+cancelledRef\s*=\s*useRef/.test(source);
@@ -227,7 +227,7 @@ describe('PrizePicker - cancelledRef 타이머 경쟁 조건 방어 (이슈 H-2)
   it('spin 함수 내에서 cancelledRef.current 체크가 있어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/PrizePicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/PrizePicker.tsx',
       'utf-8',
     );
     const hasGuardInSpin = /const\s+spin\s*=\s*\(\s*\)\s*=>\s*\{[\s\S]*?cancelledRef\.current/.test(source);
@@ -237,7 +237,7 @@ describe('PrizePicker - cancelledRef 타이머 경쟁 조건 방어 (이슈 H-2)
   it('handleReset에서 cancelledRef.current를 true로 설정해야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/PrizePicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/PrizePicker.tsx',
       'utf-8',
     );
     const hasResetCancel = /handleReset[\s\S]*?cancelledRef\.current\s*=\s*true/.test(source);
@@ -247,7 +247,7 @@ describe('PrizePicker - cancelledRef 타이머 경쟁 조건 방어 (이슈 H-2)
   it('startSpin에서 cancelledRef.current를 false로 초기화해야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/PrizePicker.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/PrizePicker.tsx',
       'utf-8',
     );
     const hasStartInit = /startSpin[\s\S]*?cancelledRef\.current\s*=\s*false/.test(source);

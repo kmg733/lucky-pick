@@ -90,7 +90,7 @@ describe('Issue H-1: LadderGame에서 Math.random() 직접 사용 금지', () =>
   it('LadderGame 소스코드에 Math.random()이 직접 사용되지 않아야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 
@@ -102,7 +102,7 @@ describe('Issue H-1: LadderGame에서 Math.random() 직접 사용 금지', () =>
   it('generateRandomNumber를 import하여 사용해야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 
@@ -149,7 +149,7 @@ describe('Issue #3: useEffect dependency - generateLadder', () => {
   it('generateLadder가 useEffect 의존성 배열에 포함되어 있어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 
@@ -167,7 +167,7 @@ describe('Issue #4: unused variable ladderHeight in calculatePath', () => {
   it('calculatePath 함수 내에 미사용 변수 ladderHeight가 없어야 한다', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync(
-      '/Users/kmg733/project/lucky-pick-fix-review/src/components/games/LadderGame.tsx',
+      '/Users/kmg733/project/lucky-pick/src/components/games/LadderGame.tsx',
       'utf-8',
     );
 
