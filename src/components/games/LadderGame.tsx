@@ -40,25 +40,6 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
   const TOP_MARGIN = 60;
   const BOTTOM_MARGIN = 60;
 
-  // 참가자 수 변경 시 초기화
-  useEffect(() => {
-    const newParticipants: LadderParticipant[] = Array.from({ length: participantCount }, (_, i) => ({
-      id: `participant-${i}`,
-      name: `참가자 ${i + 1}`,
-    }));
-    const newResults: LadderResult[] = shuffleArray(
-      Array.from({ length: participantCount }, (_, i) => ({
-        id: `result-${i}`,
-        name: i === 0 ? '당첨' : '꽝',
-      }))
-    );
-    setParticipants(newParticipants);
-    setResults(newResults);
-    setRevealedResults(new Set());
-    setSelectedIndex(null);
-    generateLadder(participantCount);
-  }, [participantCount]);
-
   // 사다리 생성 로직
   const generateLadder = useCallback((count: number) => {
     const lines: HorizontalLine[] = [];
@@ -91,11 +72,38 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
     setLadder(lines);
   }, []);
 
+  // 참가자 수 변경 시 초기화
+  useEffect(() => {
+    const newParticipants: LadderParticipant[] = Array.from({ length: participantCount }, (_, i) => ({
+      id: `participant-${i}`,
+      name: `참가자 ${i + 1}`,
+    }));
+    const newResults: LadderResult[] = shuffleArray(
+      Array.from({ length: participantCount }, (_, i) => ({
+        id: `result-${i}`,
+        name: i === 0 ? '당첨' : '꽝',
+      }))
+    );
+    setParticipants(newParticipants);
+    setResults(newResults);
+    setRevealedResults(new Set());
+    setSelectedIndex(null);
+    generateLadder(participantCount);
+  }, [participantCount, generateLadder]);
+
+  // animationFrame cleanup (메모리 누수 방지)
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== undefined) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
   // 경로 계산
   const calculatePath = useCallback((startIndex: number, count: number): LadderPath[] => {
     const path: LadderPath[] = [];
     const lineSpacing = (CANVAS_WIDTH - PADDING * 2) / (count - 1);
-    const ladderHeight = CANVAS_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN;
 
     let currentX = PADDING + startIndex * lineSpacing;
     let currentY = TOP_MARGIN;
