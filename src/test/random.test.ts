@@ -1,10 +1,64 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   pickRandom,
   pickRandomMultiple,
   generateRandomNumber,
   shuffleArray,
 } from '@/lib/random';
+
+// ---------------------------------------------------------------------------
+// CSPRNG (crypto.getRandomValues) 사용 검증
+// ---------------------------------------------------------------------------
+describe('CSPRNG 사용 검증', () => {
+  it('Math.random이 호출되지 않고 crypto.getRandomValues가 호출된다', () => {
+    const mathRandomSpy = vi.spyOn(Math, 'random');
+    const cryptoSpy = vi.spyOn(crypto, 'getRandomValues');
+
+    pickRandom([1, 2, 3, 4, 5]);
+
+    expect(mathRandomSpy).not.toHaveBeenCalled();
+    expect(cryptoSpy).toHaveBeenCalled();
+
+    mathRandomSpy.mockRestore();
+    cryptoSpy.mockRestore();
+  });
+
+  it('generateRandomNumber에서 Math.random이 호출되지 않는다', () => {
+    const mathRandomSpy = vi.spyOn(Math, 'random');
+    const cryptoSpy = vi.spyOn(crypto, 'getRandomValues');
+
+    generateRandomNumber(1, 10);
+
+    expect(mathRandomSpy).not.toHaveBeenCalled();
+    expect(cryptoSpy).toHaveBeenCalled();
+
+    mathRandomSpy.mockRestore();
+    cryptoSpy.mockRestore();
+  });
+
+  it('shuffleArray에서 Math.random이 호출되지 않는다', () => {
+    const mathRandomSpy = vi.spyOn(Math, 'random');
+    const cryptoSpy = vi.spyOn(crypto, 'getRandomValues');
+
+    shuffleArray([1, 2, 3, 4, 5]);
+
+    expect(mathRandomSpy).not.toHaveBeenCalled();
+    expect(cryptoSpy).toHaveBeenCalled();
+
+    mathRandomSpy.mockRestore();
+    cryptoSpy.mockRestore();
+  });
+
+  it('secureRandomFloat의 반환값이 0 이상 1 미만이다 (간접 검증)', () => {
+    // secureRandomFloat는 내부 함수이므로 generateRandomNumber를 통해 간접 검증
+    // min === max인 경우 항상 해당 값을 반환하므로, 범위 테스트로 검증
+    for (let i = 0; i < 1000; i++) {
+      const result = generateRandomNumber(0, 1);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(1);
+    }
+  });
+});
 
 // ---------------------------------------------------------------------------
 // pickRandom

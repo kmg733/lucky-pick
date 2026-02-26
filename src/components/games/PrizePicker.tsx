@@ -13,20 +13,14 @@ export default function PrizePicker() {
   const [displayItem, setDisplayItem] = useState<string>('');
   const [removeAfterPick, setRemoveAfterPick] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const animationFrameRef = useRef<number | undefined>(undefined);
+  const [validationError, setValidationError] = useState<string>('');
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
+  // 이슈 #2: ref 직접 참조로 cleanup (stale ref 방지)
+  // 이슈 #3: animationFrameRef 제거 (dead code)
   useEffect(() => {
-    const animationFrame = animationFrameRef.current;
-    const timeout = timeoutRef.current;
-
     return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -41,13 +35,15 @@ export default function PrizePicker() {
   };
 
   const startSpin = () => {
+    // 이슈 #4: alert() -> validationError state
     if (items.length === 0) {
-      alert('경품을 입력해주세요!');
+      setValidationError('경품을 입력해주세요!');
       return;
     }
 
     if (isSpinning) return;
 
+    setValidationError('');
     setIsSpinning(true);
     setSelectedItem(null);
 
@@ -73,10 +69,15 @@ export default function PrizePicker() {
           setDisplayItem(winner);
           setHistory(prev => [winner, ...prev]);
 
+          // 이슈 #5: filter -> splice (첫 번째 매칭만 제거)
           if (removeAfterPick) {
-            const newItems = items.filter(item => item !== winner);
-            setItems(newItems);
-            setInputText(newItems.join('\n'));
+            const winnerIndex = items.indexOf(winner);
+            if (winnerIndex !== -1) {
+              const newItems = [...items];
+              newItems.splice(winnerIndex, 1);
+              setItems(newItems);
+              setInputText(newItems.join('\n'));
+            }
           }
         }
         setIsSpinning(false);
@@ -87,11 +88,10 @@ export default function PrizePicker() {
   };
 
   const handleReset = () => {
-    setInputText('');
-    setItems([]);
     setSelectedItem(null);
     setDisplayItem('');
     setHistory([]);
+    setValidationError('');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -162,6 +162,13 @@ export default function PrizePicker() {
           <Card className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">추첨 결과</h2>
 
+            {/* 이슈 #4: 인라인 검증 메시지 */}
+            {validationError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+                <p className="text-sm text-red-600">{validationError}</p>
+              </div>
+            )}
+
             {/* 슬롯 머신 디스플레이 */}
             <div className="relative mb-6">
               <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-2xl p-8 border-4 border-yellow-400 dark:border-yellow-600 shadow-lg min-h-[200px] flex items-center justify-center">
@@ -211,10 +218,10 @@ export default function PrizePicker() {
               >
                 {isSpinning ? '추첨 중...' : '🎲 추첨하기'}
               </Button>
+              {/* 이슈 #6: spinning 중에도 초기화 가능하도록 disabled 제거 */}
               <Button
                 onClick={handleReset}
                 variant="secondary"
-                disabled={isSpinning}
                 size="lg"
               >
                 초기화
