@@ -181,18 +181,18 @@ export default function NamePicker() {
         {/* 왼쪽: 입력 영역 */}
         <div className="space-y-4">
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">참가자 목록</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">참가자 목록</h2>
             <textarea
               value={inputText}
               onChange={handleInputChange}
               placeholder="참가자 이름을 한 줄씩 입력하세요&#10;예시:&#10;김철수&#10;이영희&#10;박민수&#10;최지은"
-              className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all duration-200"
+              className="w-full h-48 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all duration-200 dark:bg-slate-700 dark:text-white"
               disabled={isSpinning}
             />
 
             <div className="mt-4 space-y-3">
               <div>
-                <label htmlFor="pickCount" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="pickCount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   뽑을 인원 수: {pickCount}명
                 </label>
                 <input
@@ -202,10 +202,10 @@ export default function NamePicker() {
                   max="5"
                   value={pickCount}
                   onChange={(e) => setPickCount(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
+                  className="w-full h-2 bg-gray-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                   disabled={isSpinning}
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>1명</span>
                   <span>2명</span>
                   <span>3명</span>
@@ -223,15 +223,15 @@ export default function NamePicker() {
                   className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                   disabled={isSpinning}
                 />
-                <label htmlFor="removeAfterPick" className="text-sm text-gray-700">
+                <label htmlFor="removeAfterPick" className="text-sm text-gray-700 dark:text-gray-300">
                   당첨된 이름은 목록에서 제거
                 </label>
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   등록된 참가자 ({names.length}명)
                 </h3>
               </div>
@@ -240,7 +240,7 @@ export default function NamePicker() {
                   {names.map((name, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded text-sm text-gray-700"
+                      className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded text-sm text-gray-700 dark:text-gray-300"
                     >
                       <span className="text-green-600">👤</span>
                       <span>{name}</span>
@@ -248,7 +248,7 @@ export default function NamePicker() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 text-center py-4">
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
                   등록된 참가자가 없습니다
                 </p>
               )}
@@ -259,11 +259,11 @@ export default function NamePicker() {
         {/* 오른쪽: 추첨 결과 */}
         <div className="space-y-4">
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">추첨 결과</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">추첨 결과</h2>
 
             {/* 슬롯 머신 디스플레이 */}
             <div className="relative mb-6">
-              <div className="bg-gradient-to-br from-green-100 to-emerald-200 rounded-2xl p-8 border-4 border-green-400 shadow-lg min-h-[200px] flex items-center justify-center">
+              <div className="bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900 dark:to-emerald-800 rounded-2xl p-8 border-4 border-green-400 dark:border-green-600 shadow-lg min-h-[200px] flex items-center justify-center">
                 {isSpinning || winners.length > 0 ? (
                   <div className="text-center w-full">
                     {isSpinning && (
@@ -300,7 +300,7 @@ export default function NamePicker() {
                           {winners.map((winner, index) => (
                             <div
                               key={index}
-                              className="flex items-center gap-3 px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-green-300 animate-pulse"
+                              className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-green-300 dark:border-green-600 animate-pulse"
                               style={{ animationDelay: `${index * 0.1}s` }}
                             >
                               <div
@@ -310,7 +310,7 @@ export default function NamePicker() {
                               >
                                 {winner.rank}
                               </div>
-                              <span className="text-lg font-medium text-gray-800">
+                              <span className="text-lg font-medium text-gray-800 dark:text-gray-200">
                                 {winner.name}
                               </span>
                               <span className="ml-auto text-xs bg-green-500 text-white px-2 py-1 rounded-full">
@@ -323,7 +323,7 @@ export default function NamePicker() {
                     )}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400">
+                  <div className="text-center text-gray-400 dark:text-gray-500">
                     <div className="text-6xl mb-4">👥</div>
                     <p className="text-lg">추첨을 시작하세요</p>
                   </div>
@@ -332,7 +332,7 @@ export default function NamePicker() {
 
               {isSpinning && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="absolute inset-0 bg-white/20 rounded-2xl animate-pulse" />
+                  <div className="absolute inset-0 bg-white/20 dark:bg-black/20 rounded-2xl animate-pulse" />
                 </div>
               )}
             </div>
@@ -362,12 +362,12 @@ export default function NamePicker() {
           {history.length > 0 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   추첨 이력 ({history.length}회)
                 </h3>
                 <button
                   onClick={handleClearHistory}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 transition-colors"
                 >
                   이력 삭제
                 </button>
@@ -376,13 +376,13 @@ export default function NamePicker() {
                 {history.map((winnerGroup, groupIndex) => (
                   <div
                     key={groupIndex}
-                    className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200"
+                    className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg border border-green-200 dark:border-green-800"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-green-500 text-white font-bold rounded-full text-xs">
                         {history.length - groupIndex}
                       </span>
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {winnerGroup.length}명 추첨
                       </span>
                       {groupIndex === 0 && (
@@ -395,7 +395,7 @@ export default function NamePicker() {
                       {winnerGroup.map((winner, winnerIndex) => (
                         <div
                           key={winnerIndex}
-                          className="flex items-center gap-2 text-sm text-gray-700"
+                          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                         >
                           <span
                             className={`w-6 h-6 flex items-center justify-center ${getRankBadgeColor(
