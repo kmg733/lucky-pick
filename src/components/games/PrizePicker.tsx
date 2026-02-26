@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import PresetPanel from '@/components/ui/PresetPanel';
 import { pickRandom } from '@/lib/random';
+import type { PrizePresetData } from '@/types/preset';
 
 export default function PrizePicker() {
   const [inputText, setInputText] = useState('');
@@ -158,6 +160,16 @@ export default function PrizePicker() {
                 </p>
               )}
             </div>
+
+            <PresetPanel<PrizePresetData>
+              gameType="prize"
+              getCurrentData={() => ({ items: inputText })}
+              onLoad={(data) => {
+                setInputText(data.items);
+                setItems(data.items.split('\n').map((s) => s.trim()).filter(Boolean));
+              }}
+              disabled={isSpinning}
+            />
           </Card>
         </div>
 

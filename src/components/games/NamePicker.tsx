@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import PresetPanel from '@/components/ui/PresetPanel';
 import { pickRandomMultiple, pickRandom } from '@/lib/random';
+import type { NamePresetData } from '@/types/preset';
 
 interface Winner {
   name: string;
@@ -258,6 +260,18 @@ export default function NamePicker() {
                 </p>
               )}
             </div>
+
+            <PresetPanel<NamePresetData>
+              gameType="name"
+              getCurrentData={() => ({ names: inputText, pickCount, removeAfterPick })}
+              onLoad={(data) => {
+                setInputText(data.names);
+                setNames(data.names.split('\n').map((s) => s.trim()).filter(Boolean));
+                setPickCount(data.pickCount);
+                setRemoveAfterPick(data.removeAfterPick);
+              }}
+              disabled={isSpinning}
+            />
           </Card>
         </div>
 

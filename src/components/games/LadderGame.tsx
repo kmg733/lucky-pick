@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import PresetPanel from '@/components/ui/PresetPanel';
 import { LadderParticipant, LadderResult } from '@/types';
 import { shuffleArray, generateRandomNumber } from '@/lib/random';
 import { useTheme } from '@/hooks/useTheme';
+import type { LadderPresetData } from '@/types/preset';
 
 interface HorizontalLine {
   fromIndex: number;
@@ -33,6 +35,7 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [revealedResults, setRevealedResults] = useState<Set<number>>(new Set());
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const pendingPresetRef = useRef<LadderPresetData | null>(null);
 
   const CANVAS_WIDTH = 800;
   const CANVAS_HEIGHT = 600;
@@ -74,21 +77,35 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
 
   // 참가자 수 변경 시 초기화
   useEffect(() => {
+    const pending = pendingPresetRef.current;
+
     const newParticipants: LadderParticipant[] = Array.from({ length: participantCount }, (_, i) => ({
       id: `participant-${i}`,
-      name: `참가자 ${i + 1}`,
+      name: pending?.participantNames[i] ?? `참가자 ${i + 1}`,
     }));
-    const newResults: LadderResult[] = shuffleArray(
-      Array.from({ length: participantCount }, (_, i) => ({
+
+    let newResults: LadderResult[];
+    if (pending) {
+      newResults = Array.from({ length: participantCount }, (_, i) => ({
         id: `result-${i}`,
-        name: i === 0 ? '당첨' : '꽝',
-      }))
-    );
+        name: pending.resultNames[i] ?? `결과 ${i + 1}`,
+      }));
+    } else {
+      newResults = shuffleArray(
+        Array.from({ length: participantCount }, (_, i) => ({
+          id: `result-${i}`,
+          name: i === 0 ? '당첨' : '꽝',
+        }))
+      );
+    }
+
     setParticipants(newParticipants);
     setResults(newResults);
     setRevealedResults(new Set());
     setSelectedIndex(null);
     generateLadder(participantCount);
+
+    pendingPresetRef.current = null;
   }, [participantCount, generateLadder]);
 
   // animationFrame cleanup (메모리 누수 방지)
@@ -308,6 +325,34 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
     setSelectedIndex(null);
   };
 
+  // 프리셋 이름 즉시 적용 (count가 동일할 때)
+  const applyPresetNames = (data: LadderPresetData) => {
+    setParticipants(prev =>
+      prev.map((p, i) => ({
+        ...p,
+        name: data.participantNames[i] ?? p.name,
+      }))
+    );
+    setResults(prev =>
+      prev.map((r, i) => ({
+        ...r,
+        name: data.resultNames[i] ?? r.name,
+      }))
+    );
+    setRevealedResults(new Set());
+    setSelectedIndex(null);
+  };
+
+  // 프리셋 불러오기 핸들러
+  const handlePresetLoad = (data: LadderPresetData) => {
+    if (data.participantCount !== participantCount) {
+      pendingPresetRef.current = data;
+      setParticipantCount(data.participantCount);
+    } else {
+      applyPresetNames(data);
+    }
+  };
+
   return (
     <div className={`flex flex-col lg:flex-row gap-6 ${className}`}>
       {/* 설정 패널 */}
@@ -366,8 +411,19 @@ export default function LadderGame({ className = '' }: LadderGameProps) {
           </div>
         </div>
 
+        <PresetPanel<LadderPresetData>
+          gameType="ladder"
+          getCurrentData={() => ({
+            participantCount,
+            participantNames: participants.map((p) => p.name),
+            resultNames: results.map((r) => r.name),
+          })}
+          onLoad={handlePresetLoad}
+          disabled={isAnimating}
+        />
+
         {/* 버튼들 */}
-        <div className="space-y-2">
+        <div className="space-y-2 mt-4">
           <Button
             onClick={handleRegenerate}
             disabled={isAnimating}
